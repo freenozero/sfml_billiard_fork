@@ -52,7 +52,7 @@ private:
 	// Sample Game에서 관리하는 게임 오브젝트들 (공, 당구대 등) 
 	std::vector<SampleBilliardObject*> gameObjects;
 	std::vector<Player*> Players;
-
+	
 	// 게임 UI 
 
 	// 게임 시간 

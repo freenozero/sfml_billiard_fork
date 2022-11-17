@@ -105,6 +105,7 @@ SampleGame::~SampleGame(void)
 	for (Player* p : Players) {
 		delete p;
 	}
+
 }
 
 sf::Font* SampleGame::font = nullptr;
@@ -190,7 +191,7 @@ void SampleGame::update(void)
 	// 플레이어 서로의 주소 추가
 	if (&(Players[0]->getNextP()) == nullptr) Players[0]->setNextP(*Players[1]);
 	if (&(Players[1]->getNextP()) == nullptr) Players[1]->setNextP(*Players[0]);
-	
+
 	//필요한 공
 	SampleBilliardGameBall* playerBall = nullptr;
 	SampleBilliardObject* eightBall = nullptr;
@@ -265,9 +266,9 @@ void SampleGame::run(void)
 	{
 		sf::Time timeout = sf::seconds(10); //10초면 다음 플레이어에게 턴 넘김
 		sf::Time sec = playerClock.getElapsedTime();
+
 		if (timeout < sec) {
 			
-			//10초이면 플레이어가 넘어감
 			if (Players[0]->isTurn()) {
 				Players[0]->setTurn(false); //턴 종료
 				Players[0]->getNextP().setTurn(true); //다음 플레이어에게 턴넘김
@@ -278,6 +279,9 @@ void SampleGame::run(void)
 			}
 			playerClock.restart();
 		}
+
+		if (Players[0]->isPhase() == MOVE || Players[1]->isPhase() == MOVE) //공이 움직이고 있을 때는 계속 게임 시간 restart
+			playerClock.restart();
 
 		sf::Event ev;
 		while (window->pollEvent(ev))
