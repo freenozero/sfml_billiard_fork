@@ -4,9 +4,9 @@
 
 int main(void)
 {
-	//초기 게임 화면 생성
-	BaseGame&& start_game = StartGame(500, 500, 60);
-	start_game.run();
-
+	while(!StartGame::isClose()){
+		StartGame Game(1028, 960, 60);
+		Game.Info();
+	}
 	return 0;
 }

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 #include "SampleBilliardBall.h"
+#include "Player.h"
 
 
 using std::vector;

@@ -36,7 +36,4 @@ private:
 	//플레이어 점수판
 	sf::RectangleShape player1Board;
 	sf::RectangleShape player2Board;
-
-	//플레이어
-	Player* player;
 };

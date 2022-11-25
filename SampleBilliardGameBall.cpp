@@ -3,11 +3,12 @@
 
 bool SampleBilliardGameBall::isIntersecting(sf::Vector2f mouse)
 {
-	// mouse의 XY가 radius 안에 들어오는지 검사a
+	// mouse의 XY가 radius 안에 들어오는지 검사 
 
 	if ((std::powf(mouse.x - getPosition().x, 2.f) + std::powf(mouse.y - getPosition().y, 2.f))
 		<= getRadius() * getRadius())
 	{
+
 		return true;
 	}
 	return false;

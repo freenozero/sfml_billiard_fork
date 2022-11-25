@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\SFML-2.5.1-windows-vc15-64-bit\SFML-2.5.1\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\SFML-2.5.1-windows-vc15-64-bit\SFML-2.5.1\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\Users\freet\Desktop\3학년2학기\객체지향\SFML-2.5.1-windows-vc15-64-bit\SFML-2.5.1\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>C:\Users\freet\Desktop\3학년2학기\객체지향\SFML-2.5.1-windows-vc15-64-bit\SFML-2.5.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClCompile Include="BaseGame.cpp" />
     <ClCompile Include="BilliardPocket.cpp" />
+    <ClCompile Include="GameButton.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="SampleBilliardBall.cpp" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="BaseGame.h" />
     <ClInclude Include="BilliardPocket.h" />
+    <ClInclude Include="GameButton.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="SampleBilliardBall.h" />
     <ClInclude Include="SampleBilliardBoard.h" />

@@ -3,10 +3,11 @@
 #include "BilliardPocket.h"
 #include "SampleGame.h"
 
+#include <SFML/Audio.hpp>
+
 SampleBilliardBall::SampleBilliardBall(void) 
 	: SampleBilliardBall(sf::Vector2f(100, 100), 10, sf::Color::Red)
 {
-	// nothing to do 
 }
 
 SampleBilliardBall::SampleBilliardBall(sf::Vector2f position, float radius, sf::Color color)
@@ -34,6 +35,19 @@ SampleBilliardBall::SampleBilliardBall(sf::Vector2f position, float radius, sf::
 		y = position.y + radius * sinf(((360.f) / (static_cast<float>(NUMVERTICES - 2)) * i + angle) * float(M_PI) / 180.f);
 		vertices[i] = sf::Vertex(sf::Vector2f(x, y), color);
 	}
+
+	//공들 부딪히는 소리
+	if (!effectBuffer[0].loadFromFile("billiard_ball.wav"))
+		std::cout << "이펙트 사운드를 로딩할 수 없습니다." << std::endl;
+	effectSound[0].setBuffer(effectBuffer[0]);
+
+	//포켓 들어가는 소리
+	if (!effectBuffer[1].loadFromFile("billiard_goal.wav"))
+		std::cout << "이펙트 사운드를 로딩할 수 없습니다." << std::endl;
+	effectSound[1].setBuffer(effectBuffer[1]);
+
+	//처음 시작했으면
+	this->first_start = true;
 }
 
 SampleBilliardBall::SampleBilliardBall(const SampleBilliardBall& rhs) : SampleBilliardBall(rhs.position, rhs.radius, rhs.color)
@@ -65,6 +79,7 @@ void SampleBilliardBall::setPosition(float x, float y)
 
 void SampleBilliardBall::setPosition(sf::Vector2f position)
 {
+
 	this->position = position;
 
 	// 위치 갱신 후 해당 위치에 원형 도형 업데이트 
@@ -84,6 +99,7 @@ void SampleBilliardBall::setAcceleration(sf::Vector2f acceleration)
 
 void SampleBilliardBall::setVelocity(float x, float y)
 {
+	first_start = false; //플레이어 공 처음 사용했으면 false로 변경
 	setVelocity(sf::Vector2f(x, y));
 }
 
@@ -114,6 +130,7 @@ void SampleBilliardBall::setColor(sf::Color color)
 
 sf::Vector2f SampleBilliardBall::getPosition(void) const
 {
+	
 	return position;
 }
 
@@ -156,6 +173,7 @@ const sf::VertexArray& SampleBilliardBall::getVertices(void) const
 // Sample Game의 객체들은 반드시 상태 갱신 함수 구현해야 함 
 void SampleBilliardBall::update(float timeElapsed)
 {
+
 	// 공의 마찰에 따른 감속량(가속도) 계산 
 	acceleration = -velocity * VISCOSITY;
 
@@ -202,9 +220,9 @@ void SampleBilliardBall::render(sf::RenderTarget& target)
 	target.draw(vertices);
 
 	// 9번~15번공은 줄무늬 입력
-	sf::RectangleShape rectangle(sf::Vector2f(19, 9));
+	sf::RectangleShape rectangle(sf::Vector2f(2*radius,radius/1.5));
 	rectangle.setFillColor(sf::Color::White);
-	rectangle.setPosition(getPosition() - sf::Vector2f(10, 4));
+	rectangle.setPosition(getPosition() - sf::Vector2f(radius,radius/3));
 	if (stoi(owner) >= 9)
 		target.draw(rectangle);
 
@@ -213,7 +231,7 @@ void SampleBilliardBall::render(sf::RenderTarget& target)
 	ballText.setFont(SampleGame::getFont());
 	ballText.setFillColor(sf::Color::Black);
 	ballText.setString(owner);
-	ballText.setCharacterSize(13);
+	ballText.setCharacterSize(radius+1);
 
 	// 10 이상은 글자가 떙겨지므로 위치 다시 설정
 	if (stoi(owner) / 10 == 1) //2자리수 이상
@@ -249,19 +267,25 @@ void SampleBilliardBall::collideWithBall(SampleBilliardBall& other)
 		//포켓하고 충돌할 경우
 		if (dynamic_cast<BilliardPocket*>(&other) != nullptr)
 		{
+			effectPocketSound();
 			//포켓 오브젝트에서 처리함.
 			//gameObjects에서 삭제해주고 pocket오브젝트에 넣을 것(미구현)
 			return;
 		}
+		
+		if (!first_start) {
+			effectBallSound();
+		}
+
 		// 겹치는 정도 계산 
 		float overlap = (distanceBetween - getRadius() - other.getRadius()) / 2.f;
 		float moveX = (overlap * (getPosition().x - other.getPosition().x) / distanceBetween);
 		float moveY = (overlap * (getPosition().y - other.getPosition().y) / distanceBetween);
 
-		// 두 공이 겹치지 않도록 다시 떼어놓음 
+		// 두 공이 겹치지 않도록 다시 떼어놓음
 		setPosition(getPosition().x - moveX, getPosition().y - moveY);
 		other.setPosition(other.getPosition().x + moveX, other.getPosition().y + moveY);
-
+		
 		// 충돌 후 속도 계산하여 적용
 		sf::Vector2f normal(distance.x / distanceBetween, distance.y / distanceBetween);
 		sf::Vector2f tangential(-normal.y, normal.x);
@@ -284,6 +308,7 @@ void SampleBilliardBall::collideWithBoard(SampleBilliardBoard& other)
 {
 	for (SampleBilliardBoard::Border border : other.getBorders())
 	{
+
 		sf::Vector2f p = getPosition();
 		sf::Vector2f s(border.getPoints()[0].position);
 		sf::Vector2f e = border.getPoints()[1].position;
@@ -308,12 +333,23 @@ void SampleBilliardBall::collideWithBoard(SampleBilliardBoard& other)
 		{
 			if (t > -0.f && t < 1.f)
 			{
+				effectBallSound(); //board에 공이 부딪힐 때
 				setPosition(p.x - distance.x * overlap / distanceBetween, p.y - distance.y * overlap / distanceBetween);
 				setVelocity(-normal.x * dotProductNormal + tangential.x * dotProductTangential,
 					-normal.y * dotProductNormal + tangential.y * dotProductTangential);
 			}
 		}
 	}
+}
+
+void SampleBilliardBall::effectBallSound(void)
+{
+	effectSound[0].play();
+}
+
+void SampleBilliardBall::effectPocketSound(void)
+{
+	effectSound[1].play();
 }
 
 void SampleBilliardBall::setOwner(std::string owner)

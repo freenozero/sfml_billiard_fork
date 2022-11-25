@@ -9,9 +9,9 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 
+#include <SFML/Audio.hpp>
 #include "SampleBilliardObject.h"
 #include "SampleBilliardBoard.h"
-
 class SampleBilliardBall : public SampleBilliardObject
 {
 public:
@@ -65,6 +65,7 @@ public:
 	void setOwner(std::string owner);
 	bool isOwner(std::string owner);
 	std::string getOwner(void);
+
 private:
 	// 공과 충돌한 경우 
 	void collideWithBall(SampleBilliardBall& other);
@@ -72,7 +73,8 @@ private:
 	// 당구대와 충돌한 경우 
 	void collideWithBoard(SampleBilliardBoard& other);
 
-
+	void effectBallSound(void); //공 충돌 소리
+	void effectPocketSound(void);
 
 private:
 	sf::Vector2f position;
@@ -88,4 +90,11 @@ private:
 
 	std::string owner;
 
+
+	//effectSound
+	sf::SoundBuffer effectBuffer[2];
+	sf::Sound effectSound[2];
+
+	//플레이어 공 만진적이 없으면 효과음 안나게 설정하는 변수
+	bool first_start;
 };

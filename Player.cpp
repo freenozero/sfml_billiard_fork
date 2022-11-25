@@ -5,15 +5,21 @@
 #include "Player.h"
 #include "ScoreBoard.h"
 
+//정적 멤버
+Player* Player::TurnPlayer = nullptr;
+
 Player::Player() : Player(0,false){}
 
-Player::Player(int num,bool turn) : turn(turn), Phase(BASIC)
-,score(0), win(false), ballType(BREAKSHOT),PlayerNum(num) {
+Player::Player(int num,bool turn) : Phase(BASIC)
+,score(0), win(DEFAULT), ballType(BREAKSHOT),PlayerNum(num) {
+	setTurn(turn);
+	setPutBallCnt(0);
 	NextP = nullptr;
 }
 
 Player::~Player(void) {
 	NextP = nullptr;
+	TurnPlayer = nullptr;
 	//NextP는 SampleGame에서 소멸됨
 }
 
@@ -30,28 +36,27 @@ int Player::getSizePocket() {
 void Player::update(float timeElapsed) {} //일정 시간지나면 자동으로 턴넘기기 할 때 쓰면?
 void Player::collide(SampleBilliardObject& other) {} //충돌 이벤트 x
 
-//업데이트
+
 //플레이어 볼과 8번공,속도를 받음
-void Player::update(SampleBilliardGameBall& playerBall,SampleBilliardObject& eightBall,int V){ 	
-	if (win == true) return; //이겼다면 실행x
+void Player::EightBallupdate(SampleBilliardGameBall& playerBall, SampleBilliardObject& eightBall, int V) {
+	if (win == WIN) return; //이겼다면 실행x
 	//플레이어 턴일 때
-	if (turn) {  
-		//Phase : 공의 상태
-		switch (Phase) {
-		case BASIC: 
+	if (turn) {
+		switch (Phase) {  //Phase : 공의 상태
+		case BASIC:
 		{
 			if (playerBall.getVelocity() == sf::Vector2f(0, 0)) {}
 			else //플레이어 볼의 속도가 변했을 때
 				setPhase(MOVE); //공 친 상태로 변경
 		}
 		break;
-		case MOVE: 
+		case MOVE:
 		{
 			if (V == 0) //속도가 모두 0이라면
 				setPhase(STOP); //친 후의 상태로 변경
 		}
 		break;
-		case STOP: 
+		case STOP:
 		{
 			//포켓 크기의 변화가 있다면
 			if (BilliardPocket::getSizePocket() != Player::getSizePocket()) {
@@ -60,107 +65,32 @@ void Player::update(SampleBilliardGameBall& playerBall,SampleBilliardObject& eig
 
 				if (BilliardPocket::InPocket(eightBall) >= 0) { //8번공이 들어간 경우
 					if (BilliardPocket::InPocket(playerBall) >= 0) { //플레이어 볼이 들어간 경우
-						yourLose(true); //무조건 패배
+						yourLose(); //무조건 패배
 					}
-					else {
-						if (ballType <= 0) { //BallType이 미정이라면 패배
-							yourLose(true);
-						}
-						else if (BilliardPocket::InPocket(eightBall) ==
-							BilliardPocket::getSizePocket() - 1)//8번공이 마지막 요소일 때 
-						{
-							//플레이어의 모든 목적볼을 넣은 경우
-							if (ballType == SOLIDS && BilliardPocket::getCntSolids() == 7)
-								yourWin(true); //승리
-							else if (ballType == STRIPES && BilliardPocket::getCntStripes() == 7)
-								yourWin(true); //승리
-							else //목적공을 못넣은 경우
-								yourLose(true);
-						}
-						else //8번공이 마지막 요소가 아닌 경우 패배
-							yourLose(true);
+					else { //8번 공이 아닌 경우
+						if (ballType <= UNKNOWN) //BallType이 미정이라면 패배
+							yourLose();
+						else if (isWin()==LAST) //모든 목적볼을 넣었다면
+							yourWin(); //승리
+						else //목적볼을 안넣었는데 8번볼 들어갔다면
+							yourLose();
 					}
 				}
 				else if (BilliardPocket::InPocket(playerBall) >= 0) { //8번공 제외 플레이어 볼이 들어간 경우
-					Phase = BASIC;
-					turn = false; //턴종료
-					getNextP().setTurn(true); //다음 플레이어 턴 
+					//흰 공이 들어간 경우이므로 무조건 턴 변경
 					playerBall.setPosition(800, 500); //플레이어볼의 포지션 정하기
 					BilliardPocket::outBall(BilliardPocket::InPocket(playerBall)); //흰공을 포켓에서 꺼냄
-					Player::setSizePocket(BilliardPocket::getSizePocket()); //포켓 크기 갱신
-
-					if (ballType == BREAKSHOT) { //브레이크 샷 인경우 
-						setBallType(UNKNOWN); //미정 상태로 변경
-						getNextP().setBallType(UNKNOWN);
-					}
-					else if (ballType == UNKNOWN && DiffSize >= 2) { //미정 상태인 경우,플레이어볼 포함 2개이상
-						//공이 몇 개이고 어떤 종류가 들어갔는지 확인
-						int str = 0; //스트라이프
-						int sol = 0; //솔리드
-						for (int i = BilliardPocket::getSizePocket() - 1; i >= DiffSize - 2; --i) {
-							if (stoi(BilliardPocket::BallRef(i).getOwner()) > 8)
-								str++;
-							else
-								sol++;
-						}
-						if (str == sol) {} //두 종류의 숫자가 같은 경우
-						else { 
-							if (stoi(BilliardPocket::BallRef(BilliardPocket::getSizePocket() - 1).getOwner()) > 8) {
-								setBallType(STRIPES);
-								getNextP().setBallType(SOLIDS);
-							}
-							else {
-								setBallType(SOLIDS);
-								getNextP().setBallType(STRIPES);
-							}
-						}
-					}
-					else if (ballType != UNKNOWN) {
-						//공 타입이 정해진 경우
-						setScore(stoi(getScore()) + (DiffSize - 1)); //흰공 뺀 숫자만큼 득점.
-					}
+					DiffSize = BilliardPocket::getSizePocket() - Player::getSizePocket(); //크기차이 재갱신
+					IfTypeSet(DiffSize); //타입 판단 후 결정
+					setTurn(false); //턴종료
+					getNextP().setTurn(true); //다음 플레이어 턴 
 				}
-				else { //8과 플레이어 볼을 제외한 목적구가 들어갔다면
-					setPhase(BASIC);
-					setScore(stoi(getScore()) + DiffSize); //들어간 수만큼 득점
-					Player::setSizePocket(BilliardPocket::getSizePocket()); //포켓 공의 개수 갱신
-
-					if (ballType == BREAKSHOT) { //브레이크 샷 인경우 
-						setBallType(UNKNOWN); //미정 상태로 변경
-						getNextP().setBallType(UNKNOWN);
-					}
-					else if (ballType == UNKNOWN) { //미정 상태인 경우
-						//공이 몇 개이고 어떤 종류가 들어갔는지 확인
-						int str = 0;
-						int sol = 0;
-						for (int i = BilliardPocket::getSizePocket() - 1; i >= DiffSize - 1; --i) {
-							if (stoi(BilliardPocket::BallRef(i).getOwner()) > 8)
-								str++;
-							else
-								sol++;
-						}
-						if (str == sol) {} //두 숫자가 같은 경우
-						else {
-							if (stoi(BilliardPocket::BallRef(BilliardPocket::getSizePocket() - 1).getOwner()) > 8) {
-								setBallType(STRIPES);
-								getNextP().setBallType(SOLIDS);
-							}
-							else {
-								setBallType(SOLIDS);
-								getNextP().setBallType(STRIPES);
-							}
-						}
-					}
-					else{ //공이 정해진 경우
-						//어떤 공인지 확인하고 자신의 공이 들어갔으면 턴유지
-						//그게 아니면 턴 넘김
-					}
-					//턴 유지
-				}
+				else //8과 플레이어 볼을 제외한 목적구가 들어갔다면
+					IfTypeSet(DiffSize);
 			}
 			else { //변화가 없다면
-				if (ballType == BREAKSHOT) { 
-					setBallType(UNKNOWN); 
+				if (ballType == BREAKSHOT) {
+					setBallType(UNKNOWN);
 					getNextP().setBallType(UNKNOWN);
 				}
 				setPhase(BASIC); //전 상태로 돌림
@@ -171,8 +101,46 @@ void Player::update(SampleBilliardGameBall& playerBall,SampleBilliardObject& eig
 		break;
 		}
 	}
-	else
-		return;
+}
+
+void Player::IfTypeSet(int DiffSize) {
+	if (isLast())
+		setWin(LAST);
+	setPhase(BASIC);
+	Player::setSizePocket(BilliardPocket::getSizePocket()); //포켓 크기 갱신
+	setScore(stoi(getScore()) + (DiffSize));
+	int str = 0; //스트라이프
+	int sol = 0; //솔리드
+	if (DiffSize != 0) {
+		for (int i = BilliardPocket::getSizePocket() - 1; i >= BilliardPocket::getSizePocket() - DiffSize; --i) {
+			if (stoi(BilliardPocket::BallRef(i).getOwner()) > 8)
+				str++;
+			else
+				sol++;
+		}
+	}
+	if (ballType == BREAKSHOT) { //브레이크 샷 인경우 
+		setBallType(UNKNOWN); //미정 상태로 변경
+		getNextP().setBallType(UNKNOWN);
+	}
+	else if (ballType == UNKNOWN) { //미정 상태인 경우
+		//들어간 공이 확실히 구분 될 때 정함
+		if (str > sol) {
+			setBallType(STRIPES);
+			getNextP().setBallType(SOLIDS);
+		}
+		else if (str < sol) {
+			setBallType(SOLIDS);
+			getNextP().setBallType(STRIPES);
+		}
+	}
+	else { //공이 정해진 경우
+		if ((ballType == STRIPES && str == 0) || (ballType == SOLIDS && sol == 0)) {
+			setTurn(false); //턴 종료
+			getNextP().setTurn(true); //다음 플레이어에게 턴넘김
+		}
+		//턴 유지
+	}
 }
 
 void Player::render(sf::RenderTarget& target) {
@@ -249,13 +217,23 @@ void Player::render(sf::RenderTarget& target) {
 			target.draw(TurnText);
 	}
 	target.draw(BallText);
-
 }
 
+int Player::getPlayerNum() const {
+	return PlayerNum;
+}
+
+//턴인 플레이어 반환
+Player& Player::WhoisTurn() {
+	return *TurnPlayer;
+}
 
 void Player::setTurn(bool turn) {
 	this->turn = turn;
+	if (turn) //턴설정
+		TurnPlayer = this; //해당 플레이어를 턴인 플레이어로 설정
 }
+
 bool Player::isTurn() const {
 	return turn;
 }
@@ -263,6 +241,7 @@ bool Player::isTurn() const {
 void Player::setPhase(int Phase) {
 	this->Phase = Phase;
 }
+
 int Player::isPhase() const {
 	return Phase;
 }
@@ -279,18 +258,23 @@ void Player::setScore(std::string param) {
 	score = stoi(getScore()) + stoi(param);
 }
 
-void Player::yourWin(bool win) {
-	Phase = 0;
-	turn = true;
-	this->win = win;
+void Player::yourWin() {
+	setPhase(BASIC);
+	setTurn(true);
+	this->win = WIN;
 }
 
-void Player::yourLose(bool lose) {
-	Phase = 0;
-	turn = false;
-	getNextP().yourWin(true); //해당 플레이어 패배 == 상대 플레이어 승리
+void Player::yourLose() {
+	setPhase(BASIC);
+	setTurn(false);
+	getNextP().yourWin(); 
+	//해당 플레이어 패배 == 상대 플레이어 승리
 }
-bool Player::isWin() const {
+
+void Player::setWin(int n) {
+	win = n;
+}
+int Player::isWin() const {
 	return win;
 }
 
@@ -310,11 +294,50 @@ int Player::getBallType() const {
 	return ballType;
 }
 
+void Player::setPutBallCnt(int num) {
+	PutBallCnt = num;
+}
+int Player::getPutBallCnt() const {
+	return PutBallCnt;
+}
+
+bool Player::isLast(){
+	//플레이어의 모든 목적볼을 넣은 경우
+	if ((ballType == SOLIDS && BilliardPocket::getCntSolids() == 7)
+		|| (ballType == STRIPES && BilliardPocket::getCntStripes() == 7))
+		return true;
+	else
+		return false;
+}
 
 void Player::setNextP(Player& p) {
 	NextP = &p;
 }
-
 Player& Player::getNextP()const{
 	return *NextP;
 }
+
+//생성 초기로 되돌림 
+//게임 재시작 시 함수 사용 후 => 여기에서 턴만 다시 설정해주면 됨.
+void Player::Init() {
+	TurnPlayer = nullptr;
+	PocketSize = 0;
+	turn = false;
+	Phase = BASIC;
+	win = DEFAULT;
+	score = 0;
+	ballType = BREAKSHOT;
+	PutBallCnt = 0;
+	NextP = nullptr;
+}
+
+static Player* TurnPlayer; //정적멤버로 턴을 가지고 있는 플레이어를 넣는다.	
+static int PocketSize; //포켓의 요소 수를 저장함(포켓 크기의 변화를 판단할 때 사용할 것.
+bool turn;
+int Phase; // 공 치기 전 : 0 || 공을 친 상태 : 1 || 공을 치고 정지 : -1 
+int win; // 승리 : 1 || 승리전 : 0 || 기본: -1
+int score;
+int ballType; //-1: 브레이크 샷(초구) || 0: 미정  | 1: Solids  | 9:  Stripes 
+int PlayerNum; //플레이어 넘버
+int PutBallCnt; //넣은 공의 수 : 흰 공 제외
+Player* NextP; //다음 플레이어의 주소
