@@ -6,8 +6,9 @@
 #include "ScoreBoard.h"
 #include "StartGame.h"
 
+
 SampleGame::SampleGame(int width, int height, int fpsLimit,int option)
-	: BaseGame(width, height, fpsLimit,option), isDraggingBall(false), draggedBall(nullptr)
+	: BaseGame(width, height, fpsLimit,option), playerBall(nullptr), isDraggedMouse(false)
 {
 	//게임 로그 남기도록
 	system("cls");
@@ -19,9 +20,27 @@ SampleGame::SampleGame(int width, int height, int fpsLimit,int option)
 	tBackGround.loadFromFile("배경.png");
 	sBackGround.setTexture(tBackGround);
 
+	//큐대 로드
+	CueTexture.loadFromFile("cue.png");
+	CueSprite.setTexture(CueTexture);
+	CueSprite.setScale(0.2f, 0.2f);
+	CueSprite.setOrigin(0, 65.f);
+	//큐대의 방향벡터
+	CueDirvec = { 1,0 };
+
+	//턴 시간
+	TurnTime = 10;
+
+	makeBilliardObject();
+
+	ExitWindow = new GameExit(window->getSize().x, window->getSize().y);
+}
+
+void SampleGame::makeBilliardObject()
+{
 	// 테스트 코드 변수 초기화
-	isCatchingBall = false;
-	catchedBall = nullptr;
+	//isCatchingBall = false;
+	//catchedBall = nullptr;
 
 	// SampleGame을 위한 인터페이스 생성 및 등록 
 
@@ -48,19 +67,21 @@ SampleGame::SampleGame(int width, int height, int fpsLimit,int option)
 	}
 
 	// SampleGame을 위한 당구공 생성 및 등록 
-
+	
 	//1번공 기준 좌표
 	sf::Vector2f one = { 800,300 };
 	//반경
 	float R = 12;
 	float Sqr3 = sqrt(3); //루트3
 
-
 	//플레이어볼
 	SampleBilliardGameBall* PlayerBall =
 		new SampleBilliardGameBall(sf::Vector2f(one.x, one.y + 300), R, sf::Color::White);
+	playerBall = PlayerBall;
 	PlayerBall->setOwner("P");
 	PlayerBall->setPlayable(true);
+	PlayerBall->setFoul(false);
+	PlayerBall->DeSelect();
 	gameObjects.push_back(PlayerBall);
 
 	//게임볼 8~22번까지 
@@ -113,7 +134,7 @@ SampleGame::SampleGame(int width, int height, int fpsLimit,int option)
 			else { //솔리드
 				int val = rand() % sol.size();
 				k = sol[val];
-				sol.erase(remove(sol.begin(), sol.end(), sol[val]), sol.end()); //해당 요소 제거
+				sol.erase(remove(sol.begin(), sol.end(), sol[val]), sol.end());
 			}
 		}
 		ball[i] = new SampleBilliardBall(Cord[i], R, color[i]);
@@ -134,12 +155,27 @@ SampleGame::SampleGame(int width, int height, int fpsLimit,int option)
 		}
 		Players.push_back(p);
 	}
+
+	// 플레이어 서로의 주소 추가
+	if (&(Players[0]->getNextP()) == nullptr) Players[0]->setNextP(*Players[1]);
+	if (&(Players[1]->getNextP()) == nullptr) Players[1]->setNextP(*Players[0]);
+
+	//파워
+	power = new Power();
+	//위치벡터의 초기 위치 설정
+	float rfx = rand() % 2 ? 1.0f : -1.0f;
+	float rfy = rand() % 2 ? 1.0f : -1.0f;
+	Posvec.x = PlayerBall->getPosition().x + rfx * (R + 5);
+	Posvec.y = PlayerBall->getPosition().y + rfy * (R + 5);
 }
 
 SampleGame::~SampleGame(void)
 {	
 	// UI 인스턴스 해제  
-	// 게임 오브젝트들 해제 
+	// 게임 오브젝트들 해제
+
+	// static멤버는 소멸자 발생해도 남아있음.
+	BilliardPocket::initPocket(); 
 	for (SampleBilliardObject* obj : gameObjects)
 	{
 		delete obj;
@@ -147,6 +183,10 @@ SampleGame::~SampleGame(void)
 	for (Player* p : Players) {
 		delete p;
 	}
+	if(power!=nullptr)
+		delete power;
+	if (ExitWindow != nullptr)
+		delete ExitWindow;
 }
 
 sf::Font* SampleGame::font = nullptr;
@@ -168,90 +208,157 @@ void SampleGame::handle(sf::Event& ev)
 	case sf::Event::Closed:
 		// 윈도우의 x 버튼 누르면 종료한다 
 		window->close();
-
 		break;
 	case sf::Event::KeyPressed:
-		// 키보드 이벤트 
 		if (ev.key.code == sf::Keyboard::Escape)
 		{
-			// TODO: game paused 
-			// TODO: call sample GUI 
+			if (ExitWindow->isOpen()) {
+				StopTimer = 0;
+				ExitWindow->Close();
+			}
+			else {
+				if(StopTimer==0)
+					StopTimer = playerClock.getElapsedTime().asSeconds();
+				ExitWindow->Open();
+			}
+		}
+		if (ExitWindow->isOpen())
+			break;
+		if (ev.key.code == sf::Keyboard::R) {
+			BilliardPocket::initPocket();
+			for (SampleBilliardObject* obj : gameObjects)
+			{
+				delete obj;
+			}
+			for (Player* p : Players) {
+				delete p;
+			}
+			if (power != nullptr)
+				delete power;
+			playerBall = nullptr; 
+			isDraggedMouse = false;
+			power = nullptr;
+			gameObjects.clear();
+			Players.clear();
+			makeBilliardObject();
+			StopTimer = 0;
+			playerClock.restart();
+			clock.restart();
+			system("cls");
+			std::cout << "[LOG]\nRestart" << std::endl;
+		}
+		if (ev.key.code == sf::Keyboard::Space) {
+			if (Player::WhoisTurn().isPhase() != MOVE && Player::WhoisTurn().isWin() != WIN) {
+				power->setPressedSpace(true);
+			}
+		}
+		break;
+	case sf::Event::KeyReleased:
+		if (ExitWindow->isOpen())
+			break;
+		if (ev.key.code == sf::Keyboard::Space) {
+			if (Player::WhoisTurn().isPhase() != MOVE&&Player::WhoisTurn().isWin() != WIN) {
+				power->setPressedSpace(false);
+			}
 		}
 		break;
 	case sf::Event::MouseMoved:
 		// 마우스 움직임 이벤트 
 		mouseXY.x = (float)ev.mouseMove.x;
 		mouseXY.y = (float)ev.mouseMove.y;
-		break;
-	case sf::Event::MouseButtonPressed:
-		// 마우스 버튼 누름 이벤트 
-		if (ev.mouseButton.button == sf::Mouse::Left)
-		{
-			for (SampleBilliardObject* obj : gameObjects)
-			{
-				//공이 움직이고 있는 상태라면 버튼 누름 이벤트발생X
-				if (Players[0]->isPhase() == MOVE || Players[1]->isPhase() == MOVE)
-					continue;
-
-				// SampleBilliardBall의 인스턴스가 아닌 경우 pass
-				SampleBilliardGameBall* gameBall = dynamic_cast<SampleBilliardGameBall*>(obj);
-				if (gameBall == nullptr)
-				{
-					continue;
+		if (ExitWindow->isOpen())
+			ExitWindow->update(mouseXY);
+		if (Player::WhoisTurn().isWin() != WIN) {
+			if (playerBall->isSelected()) {
+				if(SampleBilliardBoard::inBoard(mouseXY)){
+					playerBall->setPosition(mouseXY);
+					playerBall->setVelocity(0,0);
 				}
-
-				// 커서가 공의 내부가 아닌 경우 pass 
-				if (!gameBall->isIntersecting(mouseXY))
-				{
-					continue;
-				}
-
-				// 공이 Playable이 아닌 경우 pass 
-				if (!gameBall->isPlayable()) {
-					continue;
-				}
-
-				// 드래그 가능한 공 임시 저장 
-				draggedBall = gameBall;
-				isDraggingBall = true;
+			}
+			if (power->isDraggingPower()) { //파워가 끌렸다면
+				power->setHandlePosition(mouseXY); //포지션 설정
+				power->FixRange(); //범위 수정
+			}
+			if (!playerBall->isSelected() && isDraggedMouse == true) {
+				Posvec = mouseXY;
 			}
 		}
-		//강제로 공을 포켓에 넣는 기능 테스트용 
-		else if(ev.mouseButton.button == sf::Mouse::Right) {
-			for (SampleBilliardObject* obj : gameObjects)
-			{
-				// SampleBilliardBall의 인스턴스가 아닌 경우 pass
-				SampleBilliardBall* gameBall = dynamic_cast<SampleBilliardBall*>(obj);
-				if (gameBall == nullptr)
-				{
-					continue;
-				}
-
-				// 커서가 공의 내부가 아닌 경우 pass 
-				if ((std::powf(mouseXY.x - gameBall->getPosition().x, 2.f)
-					+ std::powf(mouseXY.y - gameBall->getPosition().y, 2.f))
-					> gameBall->getRadius() * gameBall->getRadius())
-				{
-					continue;
-				}
-
-				//잡은 공 임시 저장 
-				catchedBall = gameBall;
-				isCatchingBall = true;
+		break;
+	case sf::Event::MouseButtonPressed:
+		if (ev.mouseButton.button == sf::Mouse::Left && ExitWindow->isOpen()) {
+			switch (ExitWindow->SelectedButton()) {
+			case YES:
+				window->close();
+				break;
+			case NO:
+				StopTimer = 0;
+				ExitWindow->Close();
+				break;
+			case NOTHING:
+				break;
 			}
+		}
+		if (ExitWindow->isOpen()) //exit창이 열리면 모든 이벤트 처리 취소
+			break;
+		// 마우스 버튼 누름 이벤트 
+		if (Player::WhoisTurn().isWin() != WIN) { //승패가 결정되면 이벤트중단
+			if (ev.mouseButton.button == sf::Mouse::Left)
+			{
+				//공이 움직이고 있는 상태라면 이벤트발생X
+				if (playerBall->isIntersecting(mouseXY) && Player::WhoisTurn().isPhase() != MOVE) {
+					if (playerBall->isFoul())
+						playerBall->Select();
+				}
+				//파워를 잡았을 때
+				if (power->inHandle(mouseXY) && Player::WhoisTurn().isPhase() != MOVE) {
+					power->setDragPower(true);
+					isDraggedMouse = false;
+				}
+				else if (!playerBall->isSelected()){
+					isDraggedMouse = true;
+				}
+			}
+			//강제로 공을 포켓에 넣는 기능 테스트용 
+			/*
+			else if (ev.mouseButton.button == sf::Mouse::Right) {
+				for (SampleBilliardObject* obj : gameObjects)
+				{
+					// SampleBilliardBall의 인스턴스가 아닌 경우 pass
+					SampleBilliardBall* gameBall = dynamic_cast<SampleBilliardBall*>(obj);
+					if (gameBall == nullptr)
+					{
+						continue;
+					}
+					// 커서가 공의 내부가 아닌 경우 pass 
+					if ((std::powf(mouseXY.x - gameBall->getPosition().x, 2.f)
+						+ std::powf(mouseXY.y - gameBall->getPosition().y, 2.f))
+					> gameBall->getRadius() * gameBall->getRadius())
+					{
+						continue;
+					}
+					//잡은 공 임시 저장 
+					catchedBall = gameBall;
+					isCatchingBall = true;
+				}
+			}
+			*/
 		}
 		break;
 	case sf::Event::MouseButtonReleased:
+		if (ExitWindow->isOpen())
+			break;
 		// 마우스 버튼 뗌 이벤트 
-
-		if (ev.mouseButton.button == sf::Mouse::Left && isDraggingBall)
-		{
-
-			isDraggingBall = false;
-		}
-		//테스트 코드
-		else if (ev.mouseButton.button == sf::Mouse::Right && isCatchingBall) { //잡혀있다면
+		if (playerBall->isFoul())
+			playerBall->DeSelect();
+		if (isDraggedMouse == true)
+			isDraggedMouse = false;
+		/*
+		if (ev.mouseButton.button == sf::Mouse::Right && isCatchingBall) { //잡혀있다면
 			isCatchingBall = false;
+		}
+		*/
+		if (ev.mouseButton.button == sf::Mouse::Left && power->isDraggingPower()){ //파워 뗐을 때
+			power->setDragPower(false); 
 		}
 		break;
 	}
@@ -260,16 +367,16 @@ void SampleGame::handle(sf::Event& ev)
 // 상속 클래스는 반드시 게임 상태 갱신 함수 구현해야 함 
 void SampleGame::update(void)
 {
-	// 플레이어 서로의 주소 추가
-	if (&(Players[0]->getNextP()) == nullptr) Players[0]->setNextP(*Players[1]);
-	if (&(Players[1]->getNextP()) == nullptr) Players[1]->setNextP(*Players[0]);
-
 	//타이머
-	sf::Time timeout = sf::seconds(5); //n초 설정
+	sf::Time timeout = sf::seconds(TurnTime); //n초 설정
 	sf::Time sec = playerClock.getElapsedTime(); //플레이어의 시간을 불러와서
 
+	if (ExitWindow->isOpen()) {
+		playerClock.restart();
+	}
 	//공이 움직이고 있을 때는 계속 게임 시간 restart
-	if (Players[0]->isPhase() == MOVE || Players[1]->isPhase() == MOVE) { 
+	else if (Players[0]->isPhase() == MOVE || Players[1]->isPhase() == MOVE) {  
+		isDraggedMouse = false; //공이 움직일 때는 false로
 		if(StopTimer==0)
 			StopTimer = sec.asSeconds();
 		playerClock.restart();
@@ -281,6 +388,9 @@ void SampleGame::update(void)
 	else if (timeout < sec) { //플레이어 시간이 n초를 넘기면
 		Player::WhoisTurn().getNextP().setTurn(true); //다음 사람의 턴 true로
 		Player::WhoisTurn().getNextP().setTurn(false); //현재 턴 아닌사람 false로
+		//파워 초기화
+		power->InitDraggedDistance();
+		power->InitHandlePosition();
 		StopTimer= 0;
 		playerClock.restart();
 	}
@@ -288,9 +398,8 @@ void SampleGame::update(void)
 		StopTimer = 0;
 	
 	//필요한 공
-	SampleBilliardGameBall* playerBall = nullptr;
 	SampleBilliardObject* eightBall = nullptr;
-	
+
 	//모든 공의 속도
 	int Velocity = 0;
 	
@@ -299,9 +408,6 @@ void SampleGame::update(void)
 	{
 		obj->update(clock.getElapsedTime().asSeconds());
 
-		//플레이어볼 추출
-		if (playerBall==nullptr)
-			playerBall = dynamic_cast<SampleBilliardGameBall*>(obj);
 		//8번공 추출
 		if (eightBall == nullptr) {
 			SampleBilliardBall* eight = dynamic_cast<SampleBilliardBall*>(obj);
@@ -321,34 +427,58 @@ void SampleGame::update(void)
 		std::cout << "Exit[-1]: Error" << std::endl;
 		exit(-1);
 	}
+
 	// 게임 오브젝트 충돌 검사
 	for (SampleBilliardObject* obj1 : gameObjects)
 	{
 		for (SampleBilliardObject* obj2 : gameObjects)
-		{	
+		{
 			obj1->collide(*obj2);
 		}
 	}
 
+
 	//플레이어 업데이트, 점수판 업데이트
 	Player::WhoisTurn().EightBallupdate(*playerBall, *eightBall, Velocity);
-	
 
-			
-	// 끌었다가 놓은 공에 속도를 지정하고 표시 해제
-	if (!isDraggingBall && draggedBall != nullptr)
-	{
-		draggedBall->setVelocity(draggedBall->getPosition().x - mouseXY.x, draggedBall->getPosition().y - mouseXY.y);
-		draggedBall = nullptr;
-	}
 
 	//플레이어 볼의 속도와 잡힌 공을 포켓위치로 넣어버림.
+	//테스트코드
+	/*
 	if (!isCatchingBall && catchedBall != nullptr) {
 		playerBall->setVelocity(2, 2);
 		catchedBall->setPosition(595, 447);
 		catchedBall = nullptr;
 	}
+	*/
 
+	/*  파워 관련 기능  */
+
+	//스페이스로 핸들링
+	if (power->isPressedSpace()){
+		//핸들 속도 조절
+		float HVf = 4.f;
+		if(power->isChangeDir())
+			power->setHandlePosition(power->getHandlePosition() + sf::Vector2f(-HVf, 0));
+		else 
+			power->setHandlePosition(power->getHandlePosition() + sf::Vector2f(HVf, 0));
+		//핸들 진행 방향 변경
+		if (power->getHandlePosition().x > HDX2)
+			power->setChangeDir(true);
+		else if(power->getHandlePosition().x < HDX1)
+			power->setChangeDir(false);
+		power->FixRange();
+	}
+
+	//핸들링 종료 시
+	if (!(power->isPressedSpace() || power->isDraggingPower()) && power->getDraggedDistance() != 0) {
+		//속도 조절 인수
+		float V = 3.2f; //속도 배수 조정
+		playerBall->setVelocity(V * power->getDraggedDistance() * Dirvec);
+		//끌린 거리 초기화
+		power->InitDraggedDistance();
+		power->InitHandlePosition();
+	}
 
 	// 다음 단위 시간을 위해 초기화 
 	clock.restart();
@@ -375,43 +505,64 @@ void SampleGame::render(sf::RenderTarget& target)
 		obj->render(target);
 	}
 
-	// 공을 드래그 하면 세기 표시 (길이 및 색)
-	renderDragpower(target);
-
 	// 게임 UI 렌더링
+	//방향 표시
+	if (Player::WhoisTurn().isPhase() != MOVE) {
+		power->render(target);
+		renderDirection(target);
+	}
 
 	//플레이어 시간
 	PlayerTimerRender(target);
+
+	if(ExitWindow->isOpen())
+		ExitWindow->render(target);
 }
 
-void SampleGame::renderDragpower(sf::RenderTarget& target)
-{
-	if (isDraggingBall)
-	{
+void SampleGame::renderDirection(sf::RenderTarget& target) {
+	if (!playerBall->isSelected()) {
+		sf::Vector2f distance = (Posvec - playerBall->getPosition());
+		float distanceBetween = sqrt(distance.x * distance.x + distance.y * distance.y); //거리를 구함
+		float resize = 2000.f; //크기를 최대한 늘림
+		Dirvec = distance / distanceBetween; //방향벡터
+		sf::Vector2f toResizing(resize *Dirvec);
+		Posvec = toResizing + playerBall->getPosition();
+		sf::Color directionColor = sf::Color(255, 0, 0);
 
-		sf::Vector2f distance = (mouseXY - draggedBall->getPosition());
-		float distanceBetween = sqrt(distance.x * distance.x + distance.y * distance.y);
-		sf::Vector2f invert = distance / distanceBetween; //단위벡터?
-		sf::Color directionColor = sf::Color(255, (255 - ((int)distanceBetween / 2) % 255), 0);
-		if (distanceBetween > 510)
-		{
-			directionColor = sf::Color::Red;
-		}
+		Posvec = FixVec(Posvec); //해당 벡터의 충돌 시 충돌범위까지 수정
 
-		sf::Vector2f toSubtract(distanceBetween * invert.x, distanceBetween * invert.y); //반대방향
-		sf::Vertex start = sf::Vertex(draggedBall->getPosition(), directionColor);
-		sf::Vertex end = sf::Vertex(draggedBall->getPosition() - toSubtract, directionColor);
+		sf::Vertex start = sf::Vertex(playerBall->getPosition(), directionColor);
+		sf::Vertex end = sf::Vertex(Posvec, directionColor);
+
+		//큐대의 위치
+		sf::Vector2f X(Posvec - playerBall->getPosition());
+		sf::Vector2f rotationX(X.x * cos(M_PI) - X.y * sin(M_PI), X.x * sin(M_PI) + X.y * cos(M_PI));
+		//각도를 구하기 위해 내적값을 미리 구함
+		float InnerPd = rotationX.x * CueDirvec.x + rotationX.y * CueDirvec.y;
+		resize = sqrt(rotationX.x * rotationX.x + rotationX.y * rotationX.y);
+		//파워에 따라 위치가  ~ 200.f까지 변하도록
+		float MinPos = playerBall->getRadius();
+		rotationX = (rotationX / resize) * (MinPos 
+			+ (power->getDraggedDistance() / (HDX2 - HDX1)) * (200-MinPos));
+		sf::Vector2f CuePosvec = playerBall->getPosition() + rotationX;
+		CueSprite.setPosition(CuePosvec);
+		//큐대의 회전각도 => cos각도 +-를 구분할 수 없음. 
+		//따라서 rotationX의 y값이 음수; 큐대의 방향벡터보다 위에 있는지를 판단해서 각도에 -부여. 
+		float CueAngle = 180 * (acosf(InnerPd / resize) / M_PI); //Radian to Degree
+		if (rotationX.y<0)
+			CueAngle = CueAngle * -1.0f;
+		CueSprite.setRotation(CueAngle);
 
 		sf::VertexArray points;
 		points.setPrimitiveType(sf::LineStrip);
 		points.append(start);
 		points.append(end);
 		target.draw(points);
+		target.draw(CueSprite);
 	}
 }
 
 void SampleGame::PlayerTimerRender(sf::RenderTarget& target) {
-
 	sf::RectangleShape TimerBar;
 	TimerBar.setFillColor(sf::Color::Green);
 	TimerBar.setOutlineColor(sf::Color::Black);
@@ -419,8 +570,46 @@ void SampleGame::PlayerTimerRender(sf::RenderTarget& target) {
 	TimerBar.setPosition(30.f, 50.f);
 
 	if(StopTimer!=0) //턴 넘겨질 때 정지된 시간
-		TimerBar.setSize(sf::Vector2f(300- StopTimer*60, 20));
+		TimerBar.setSize(sf::Vector2f(300- StopTimer*(300.f/TurnTime), 20));
 	else
-		TimerBar.setSize(sf::Vector2f(300 - playerClock.getElapsedTime().asSeconds()* 60, 20));
+		TimerBar.setSize(sf::Vector2f(300 - playerClock.getElapsedTime().asSeconds()*(300.f / TurnTime), 20));
 	target.draw(TimerBar);
+}
+
+sf::Vector2f SampleGame::FixVec(sf::Vector2f vec) {
+	sf::Vector2f result; //선분 벡터
+	sf::Vector2f Start = playerBall->getPosition();
+	sf::Vector2f End = vec;
+	sf::Vector2f Direction = End - Start; //방향벡터
+	float distance = sqrt(powf(Direction.x, 2.f) + powf(Direction.y, 2.f));
+	Direction = Direction / distance; 
+	for (float i = 0; i <= distance; ++i) {
+		//시작점에서 끝점까지의 선분 집합을 구함
+		result = i*Direction + Start;
+		//포켓에 없는 공 중에서 
+		for (SampleBilliardObject* obj : gameObjects) {
+			if (nullptr != dynamic_cast<BilliardPocket*>(obj))
+				continue;
+			else if (nullptr != dynamic_cast<SampleBilliardGameBall*>(obj))
+				continue;
+			else if (nullptr == dynamic_cast<SampleBilliardBall*>(obj))
+				continue;
+			SampleBilliardBall& ball = *dynamic_cast<SampleBilliardBall*>(obj);
+			//해당 공에 대해 포켓에 들어있는 공인지 확인
+			if (BilliardPocket::InPocket(ball) != -1) 
+				continue;
+			//해당 공 안에 벡터가 들어오는가를 판단, 해당 점을 return 
+			if ((std::powf(result.x - ball.getPosition().x, 2.f) + std::powf(result.y - ball.getPosition().y, 2.f))
+				<= ball.getRadius() * ball.getRadius())
+			{
+				return result;
+			}
+		}
+		//처음으로 경계에 벗어나는 지점을 반환
+		if (!(result.x >= INLEFT && result.x <= INRIGHT &&
+			result.y >= INTOP && result.y <= INBOTTOM)){
+			break;
+		}
+	}
+	return result;
 }

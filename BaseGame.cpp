@@ -3,19 +3,41 @@
 
 BaseGame::BaseGame(int width, int height, int fpsLimit, int option) : window(nullptr)
 {
+	const sf::Vector2i WinPos(500, 0);
+
+	//공 충돌 소리
+	if (!BallBuff.loadFromFile("billiard_ball.wav"))
+		std::cout << "이펙트 사운드를 로딩할 수 없습니다." << std::endl;
+	BallSound.setBuffer(BallBuff);
+	BallSound.setLoop(false);
+
+	//포켓 들어가는 소리
+	if (!PocketBuff.loadFromFile("billiard_goal.wav"))
+		std::cout << "이펙트 사운드를 로딩할 수 없습니다." << std::endl;
+	PocketSound.setBuffer(PocketBuff);
+	PocketSound.setLoop(false);
+
 	switch (option) {
 	case EIGHTBALL: //8Ball 
 	{
 		PlayBGM("게임음악.wav");
 		window = new sf::RenderWindow(sf::VideoMode(width, height), "EightBall", sf::Style::Default);
+		window->setPosition(WinPos);
 		window->setFramerateLimit(fpsLimit);
-
+	}
+	break;
+	case THREEBALL:
+	{
+		PlayBGM("게임음악.wav");
+		window = new sf::RenderWindow(sf::VideoMode(width, height), "ThreeBall", sf::Style::Default);
+		window->setPosition(WinPos);
+		window->setFramerateLimit(fpsLimit);
 	}
 	break;
 	default:
 	{
-		//PlayBGM("????");
-		window = new sf::RenderWindow(sf::VideoMode(width, height), "???????", sf::Style::Default);
+		PlayBGM("게임음악.wav");
+		window = new sf::RenderWindow(sf::VideoMode(width, height), "FourBall", sf::Style::Default);
 		window->setFramerateLimit(fpsLimit);
 	}
 	break;
@@ -25,7 +47,7 @@ BaseGame::BaseGame(int width, int height, int fpsLimit, int option) : window(nul
 BaseGame::~BaseGame(void)
 {
 	//음악중지
-	Gamesound.stop(); 
+	Gamesound.stop();
 	// 게임 윈도우 해제 
 	delete window;
 }
@@ -66,4 +88,18 @@ void BaseGame::PlayBGM(const char* BGM) {
 	Gamesound.setBuffer(Gamebuffer);
 	Gamesound.play();
 	Gamesound.setLoop(true);
+}
+
+//공 효과음
+sf::SoundBuffer	BaseGame::PocketBuff;
+sf::SoundBuffer	BaseGame::BallBuff;
+sf::Sound BaseGame::BallSound;
+sf::Sound BaseGame::PocketSound;
+
+void BaseGame::effectBallSound() {
+	BallSound.play();
+}
+
+void BaseGame::effectPocketSound() {
+	PocketSound.play();
 }

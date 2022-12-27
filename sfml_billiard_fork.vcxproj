@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>C:\Users\freet\Desktop\3학년2학기\객체지향\SFML-2.5.1-windows-vc15-64-bit\SFML-2.5.1\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\Users\freet\Desktop\3학년2학기\객체지향\SFML-2.5.1-windows-vc15-64-bit\SFML-2.5.1\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>$(HOMEPATH)\source\repos\SFML-2.5.1\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(HOMEPATH)\source\repos\SFML-2.5.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -137,21 +137,28 @@
   <ItemGroup>
     <ClCompile Include="BaseGame.cpp" />
     <ClCompile Include="BilliardPocket.cpp" />
+    <ClCompile Include="FourBallGame.cpp" />
     <ClCompile Include="GameButton.cpp" />
+    <ClCompile Include="GameExit.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Power.cpp" />
     <ClCompile Include="SampleBilliardBall.cpp" />
     <ClCompile Include="SampleBilliardBoard.cpp" />
     <ClCompile Include="SampleBilliardGameBall.cpp" />
     <ClCompile Include="SampleGame.cpp" />
     <ClCompile Include="ScoreBoard.cpp" />
     <ClCompile Include="StartGame.cpp" />
+    <ClCompile Include="ThreeBallGame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseGame.h" />
     <ClInclude Include="BilliardPocket.h" />
+    <ClInclude Include="FourBallGame.h" />
     <ClInclude Include="GameButton.h" />
+    <ClInclude Include="GameExit.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Power.h" />
     <ClInclude Include="SampleBilliardBall.h" />
     <ClInclude Include="SampleBilliardBoard.h" />
     <ClInclude Include="SampleBilliardGameBall.h" />
@@ -159,6 +166,7 @@
     <ClInclude Include="SampleGame.h" />
     <ClInclude Include="ScoreBoard.h" />
     <ClInclude Include="StartGame.h" />
+    <ClInclude Include="ThreeBallGame.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,25 +1,35 @@
-﻿  BaseGame.cpp
-  BilliardPocket.cpp
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\BilliardPocket.cpp(115,32): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\BilliardPocket.cpp(134,23): warning C4267: '초기화 중': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\BilliardPocket.cpp(189,22): warning C4267: 'return': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  Player.cpp
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\Player.cpp(1,1): warning C4828: 파일에 0x22ba 오프셋에서 시작하는 문자가 포함되어 있습니다. 이 문자는 현재 원본 문자 집합에서 잘못된 문자입니다(코드 페이지 949).
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\Player.cpp(207,13): warning C4805: '==': 연산에 'int' 형식과 'bool' 형식을 함께 사용하는 것은 안전하지 않습니다.
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\Player.cpp(214,14): warning C4805: '==': 연산에 'int' 형식과 'bool' 형식을 함께 사용하는 것은 안전하지 않습니다.
-  SampleBilliardBall.cpp
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\SampleBilliardBall.cpp(223,59): warning C4244: '인수': 'double'에서 'T'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+﻿  FourBallGame.cpp
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(15,12): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(34,66): warning C4244: '인수': 'T'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+          with
+          [
+              T=unsigned int
+          ]
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(34,45): warning C4244: '인수': 'T'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+          with
+          [
+              T=unsigned int
+          ]
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(520,77): warning C4244: '인수': 'double'에서 'T'(으)로 변환하면서 데이터가 손실될 수 있습니다.
           with
           [
               T=float
           ]
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\SampleBilliardBall.cpp(234,34): warning C4244: '인수': 'float'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  SampleBilliardGameBall.cpp
-  SampleGame.cpp
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\SampleGame.cpp(16,12): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\sfml_billiard_fork\SampleGame.cpp(56,13): warning C4244: '초기화 중': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  ScoreBoard.cpp
-  StartGame.cpp
-  main.cpp
-  코드를 생성하고 있습니다...
-  sfml_billiard_fork.vcxproj -> C:\Users\freet\Desktop\3학년2학기\객체지향\mid_project\sfml_billiard_fork\x64\Debug\sfml_billiard_fork.exe
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(520,42): warning C4244: '인수': 'double'에서 'T'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+          with
+          [
+              T=float
+          ]
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(532,18): warning C4244: '초기화 중': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(563,77): warning C4244: '인수': 'double'에서 'T'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+          with
+          [
+              T=float
+          ]
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(563,42): warning C4244: '인수': 'double'에서 'T'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+          with
+          [
+              T=float
+          ]
+C:\Users\김태호\Desktop\최신 당구\sfml_billiard_fork\FourBallGame.cpp(575,18): warning C4244: '초기화 중': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  sfml_billiard_fork.vcxproj -> C:\Users\김태호\Desktop\최신 당구\x64\Debug\sfml_billiard_fork.exe

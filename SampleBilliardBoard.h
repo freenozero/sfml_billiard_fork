@@ -11,6 +11,11 @@
 
 #include "SampleBilliardObject.h"
 
+#define INTOP 55.f
+#define INBOTTOM 840.f
+#define INLEFT 602.5f
+#define INRIGHT 992.f
+
 class SampleBilliardBoard : public SampleBilliardObject
 {
 public:
@@ -33,6 +38,9 @@ public:
 	// 생성자 
 	SampleBilliardBoard(void);
 
+	//3,4구용
+	SampleBilliardBoard(int);
+
 	// 소멸자 
 	~SampleBilliardBoard(void);
 
@@ -47,6 +55,9 @@ public:
 
 	// 당구대를 구성하는 경계 요소 반환 
 	const std::vector<SampleBilliardBoard::Border>& getBorders(void) const;
+
+	// 해당 벡터가 당구대 내부에 있는지 검사
+	static bool inBoard(sf::Vector2f vec);
 
 private:
 	// 당구대를 나타내는 스프라이트 이미지 

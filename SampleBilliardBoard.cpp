@@ -21,8 +21,8 @@ SampleBilliardBoard::SampleBilliardBoard(void)
 	Radius = Radius + 5.f; //공의 반경 + 여분
 	
 	//내부 경계
-	float inX[2] = { 602.5f,992.f };
-	float inY[2] = { 55.f,840.f };
+	float inX[2] = { INLEFT,INRIGHT };
+	float inY[2] = { INTOP,INBOTTOM };
 	typedef SampleBilliardBoard::Border B;
 	B inLineTop(inX[0]+Radius, inY[0], inX[1]- Radius, inY[0]);
 	B inLineBottom(inX[0]+ Radius, inY[1], inX[1]- Radius, inY[1]);
@@ -93,6 +93,35 @@ SampleBilliardBoard::SampleBilliardBoard(void)
 	borderLines.push_back(BROI_Down);
 }
 
+//3구용
+SampleBilliardBoard::SampleBilliardBoard(int)
+{
+	// Sample Game을 위한 당구대 텍스처 이미지 로드 
+	texture.loadFromFile("ThreeBallBoard.png", sf::IntRect(1, 1, 454, 848));
+
+	// 스프라이트 설정 
+	sprite.setTexture(texture);
+	sprite.setPosition(572.5f, 25.f);
+
+	// 당구대 경계 초기화
+
+	//경계
+	float X[2] = { INLEFT,INRIGHT };
+	float Y[2] = { INTOP,INBOTTOM };
+	typedef SampleBilliardBoard::Border B;
+
+	B lineTop(X[0], Y[0], X[1], Y[0]);
+	B lineBottom(X[0], Y[1], X[1], Y[1]);
+	B lineLeft(X[0], Y[0], X[0], Y[1]);
+	B lineRight(X[1], Y[0], X[1], Y[1]);
+
+	borderLines.push_back(lineTop);
+	borderLines.push_back(lineBottom);
+	borderLines.push_back(lineLeft);
+	borderLines.push_back(lineRight);
+}
+
+
 // 소멸자 
 SampleBilliardBoard::~SampleBilliardBoard(void)
 {
@@ -121,4 +150,14 @@ void SampleBilliardBoard::render(sf::RenderTarget& target)
 const std::vector<SampleBilliardBoard::Border>& SampleBilliardBoard::getBorders(void) const
 {
 	return borderLines;
+}
+
+
+//보드내부 경계 근사치 적용
+bool SampleBilliardBoard::inBoard(sf::Vector2f vec) {
+	float ap = 10;
+	if (vec.x >= INLEFT+ap && vec.x <= INRIGHT-ap && vec.y >= INTOP+ap && vec.y <= INBOTTOM-10)
+		return true;
+	else
+		return false;
 }

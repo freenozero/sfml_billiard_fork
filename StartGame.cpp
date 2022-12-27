@@ -1,9 +1,9 @@
 #include "StartGame.h"
 
 
-StartGame::StartGame(int width, int height, int fpsLimit) 
+StartGame::StartGame(int width, int height, int fpsLimit)
 	: Width(width), Height(height), FpsLimit(fpsLimit), option(0), isChangeBK(false), interval(0), time(0)
-{	
+{
 	std::cout << "GameWindow Loading..." << std::endl;
 
 	//음악설정
@@ -28,12 +28,21 @@ StartGame::StartGame(int width, int height, int fpsLimit)
 	BackGround.loadFromFile("empty.png", sf::IntRect(0, 0, 500, 500));
 	sprite.setTexture(texture);
 	sprite.setPosition(0, 0);
-
-	//버튼 추가 >> 인자로 이미지이름,x좌표,y좌표,너비,높이를 받음
-	GBBW.push_back(new GameButton("eightball_bw.png", 20, 40, 164, 149));
-	GB.push_back(new GameButton("eightball.png",20,40,164,149));
-
 	Tnum = T1;
+
+	//버튼 추가 
+	int Bw = 149;
+	int Bh = 126;
+	GBBW.push_back(new GameButton("eightball_bw.png", 170, 40, Bw, Bh));
+	GB.push_back(new GameButton("eightball.png", 170, 40, Bw, Bh));
+
+	GBBW.push_back(new GameButton("threeball_bw.png", 75, 200, Bw, Bh));
+	GB.push_back(new GameButton("threeball.png", 75, 200, Bw, Bh));
+
+	GBBW.push_back(new GameButton("fourball_bw.png", 280, 200, Bw, Bh));
+	GB.push_back(new GameButton("fourball.png", 280, 200, Bw, Bh));
+	for (GameButton* g : GBBW)
+		g->setVisible(true);
 }
 
 bool StartGame::Close = false;
@@ -53,10 +62,30 @@ StartGame::~StartGame(void)
 	}
 	delete window;
 	//창 닫고 게임 불러옴
-	if(option>0){
-		BaseGame&& game = SampleGame(Width, Height, FpsLimit,option);
+	switch (option) {
+	case EIGHTBALL:
+	{
+		BaseGame&& game = SampleGame(Width, Height, FpsLimit, option);
 		game.run();
 		option = 0; //기본
+		break;
+	}
+	case THREEBALL:
+	{
+		BaseGame&& game = ThreeBallGame(Width, Height, FpsLimit, option);
+		game.run();
+		option = 0;
+		break;
+	}
+	case FOURBALL:
+	{
+		BaseGame&& game = FourBallGame(Width, Height, FpsLimit, option);
+		game.run();
+		option = 0;
+		break;
+	}
+	default:
+		break;
 	}
 	std::cout << "Exit" << std::endl;
 }
@@ -72,44 +101,43 @@ void StartGame::handle(sf::Event& ev)
 		// 마우스 움직임 이벤트 
 		mouseXY.x = (float)ev.mouseMove.x;
 		mouseXY.y = (float)ev.mouseMove.y;
-		
+		//버튼내 마우스 들어오면 보이도록
 		for (GameButton* g : GB) {
-			if (g->isIntersecting(mouseXY))
+			if (g->inButton(mouseXY))
 				g->setVisible(true);
 			else
 				g->setVisible(false);
-		}
-		for (GameButton* g : GBBW) {
-			if (g->isIntersecting(mouseXY))
-				g->setVisible(false);
-			else
-				g->setVisible(true);
 		}
 		break;
 	case sf::Event::MouseButtonPressed:
 		if (ev.mouseButton.button == sf::Mouse::Left) {
-			if(!isChangeBK){ //변경전
+			if (!isChangeBK) { //변경전
 				//여기에서 게임 선택
 				sprite.setTexture(BackGround);
 				sprite.setPosition(0, 0);
-				isChangeBK=true; //화면 변경
+				isChangeBK = true; //화면 변경
 			}
 			else { //변경되었을 때
 				//버튼1 안에서 좌클릭 발생 시
-				if (GB[0]->isIntersecting(mouseXY)){
+				if (GB[0]->inButton(mouseXY)) {
 					option = EIGHTBALL; //EIGHTBALL게임 실행
 					window->close();
 				}
-				else {
-					//버튼 2, 3 에 대한 옵션	
+				else if (GB[1]->inButton(mouseXY)) {
+					option = THREEBALL; //THREEBALL게임 실행
+					window->close();
+				}
+				else if(GB[2]->inButton(mouseXY)) {
+					option = FOURBALL; //THREEBALL게임 실행
+					window->close();
 				}
 			}
 		}
 		if (ev.mouseButton.button == sf::Mouse::Right) {
-			if (!isChangeBK) { 
+			if (!isChangeBK) {
 				//nothing...
 			}
-			else { 
+			else {
 				sprite.setTexture(texture);
 				sprite.setPosition(0, 0);
 				isChangeBK = false; //화면 변경
@@ -145,7 +173,7 @@ void StartGame::Info(void)
 }
 
 void StartGame::render(sf::RenderTarget& target)
-{	
+{
 	float xPosition = 130;
 	float yPosition = 450;
 	//배경 변경 전
@@ -192,10 +220,17 @@ void StartGame::render(sf::RenderTarget& target)
 		clock.restart(); //재시작
 	}
 	else { //게임 선택 화면
+		sf::Text SelectGame;
+		SelectGame.setFont(SampleGame::getFont());
+		SelectGame.setFillColor(sf::Color::Yellow);
+		SelectGame.setCharacterSize(35);
+		SelectGame.setString("Select   Game");
+		SelectGame.setPosition(150, 400);
 		target.draw(sprite);
-		for (GameButton* g : GB)
-			g->render(target);
+		target.draw(SelectGame);
 		for (GameButton* g : GBBW)
+			g->render(target);
+		for (GameButton* g : GB)
 			g->render(target);
 	}
 }

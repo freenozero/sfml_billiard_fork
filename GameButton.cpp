@@ -14,7 +14,7 @@ void GameButton::render(sf::RenderTarget& target) {
 		target.draw(sprite);
 }
 
-bool GameButton::isIntersecting(sf::Vector2f mouse)
+bool GameButton::inButton(sf::Vector2f mouse)
 {
 	// mouse의 XY가 버튼 안에 들어오는지 검사 
 	if ((mouse.x <= x + width && mouse.x >= x) && (mouse.y <= y + height && mouse.y >= y))

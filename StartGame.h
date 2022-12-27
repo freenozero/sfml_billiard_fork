@@ -3,7 +3,6 @@
 #include <vector> 
 #include <string>
 #include <cstdlib>
-#include <thread>
 
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
@@ -17,19 +16,21 @@
 
 #include "GameButton.h"
 #include "SampleGame.h"
+#include "ThreeBallGame.h"
+#include "FourBallGame.h"
 #include "BaseGame.h"
 #include "SampleBilliardGameBall.h"
 
 enum {
-	T1=1,T2,T3,T4
+	T1 = 1, T2, T3, T4
 };
 
 //게임 추가 될 때 여기에 옵션 추가
 enum {
-	DEF=0,EIGHTBALL
+	DEF = 0, EIGHTBALL, THREEBALL, FOURBALL
 };
 
-class StartGame{
+class StartGame {
 public:
 	StartGame(int width, int height, int fpsLimit);
 
@@ -62,7 +63,7 @@ private:
 	// 게임 UI셋
 	sf::Texture			Btexture;
 	sf::Sprite			Bsprite;
-	
+
 	sf::Texture	ButtonT1;
 	sf::Texture	ButtonT2;
 	sf::Texture	ButtonT3;
@@ -81,7 +82,7 @@ private:
 
 	// 마우스 위치
 	sf::Vector2f mouseXY;
-	
+
 	//화면 넘김 여부
 	bool isChangeBK;
 

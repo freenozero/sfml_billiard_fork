@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SFML/Audio.hpp>
 class SampleBilliardObject
 {
 public:
@@ -12,5 +11,4 @@ public:
 
 	// Sample Game의 객체들은 반드시 렌더링 함수 구현해야 함  
 	virtual void render(sf::RenderTarget& target) = 0;
-
 };

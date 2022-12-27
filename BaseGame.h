@@ -26,6 +26,9 @@ public:
 	//BGM실행
 	void PlayBGM(const char* BGM);
 
+	static void effectBallSound();
+	static void effectPocketSound();
+
 protected:
 	// 상속 클래스는 반드시 이벤트 핸들링 함수 구현해야 함 
 	virtual void handle(sf::Event& ev) = 0;
@@ -44,4 +47,10 @@ private:
 	//BGM
 	sf::SoundBuffer Gamebuffer;
 	sf::Sound Gamesound;
+
+	//충돌시 소리
+	static sf::SoundBuffer BallBuff;
+	static sf::SoundBuffer PocketBuff;
+	static sf::Sound BallSound;
+	static sf::Sound PocketSound;
 };

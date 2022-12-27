@@ -24,9 +24,8 @@ public:
 	float getWidth() const;
 	float getHeight() const;
 	GameButton(const char* bk, float posX, float posY, float width, float height);
-	bool isIntersecting(sf::Vector2f mouse);
+	bool inButton(sf::Vector2f mouse);
 	void render(sf::RenderTarget& target);
-
 	void setVisible(bool visible);
 	bool isVisible() const;
 };

@@ -1,16 +1,17 @@
 #include "BilliardPocket.h"
 #include "SampleGame.h"
 
-#include <SFML/Audio.hpp>
 //정적변수
 vector<SampleBilliardObject*> BilliardPocket::Pocket;
 
 //소멸자.
 BilliardPocket::~BilliardPocket() {
-	for (SampleBilliardObject* obj : Pocket)
-	{
-		delete obj;
-	}
+	//포켓 클리어
+	initPocket();
+}
+
+void BilliardPocket::initPocket() {
+	Pocket.clear();
 }
 
 //오브젝트 충돌 재정의
@@ -79,20 +80,6 @@ void BilliardPocket::collideWithBall(SampleBilliardBall& other)
 		//other.setVelocity(dotProductTangential2 * tangential + m2 * normal);
 		other.setVelocity(0, 0);
 		setVelocity(0, 0); //포켓 속도0
-
-		////포켓에 들어가는 소리
-		//sf::Music music;
-		//if (music.openFromFile("billiard_goal.wav")) {
-		//	//std::cout << "[music load 가능]" << std::endl;
-		//	music.setPitch(1.2);
-		//	music.setVolume(100);
-		//	music.play();
-
-		//	while (music.getStatus() == sf::Music::Playing) //음악 끝날때까지 루프
-		//	{
-		//		//std::cout << "재생중" << std::endl;
-		//	}
-		//}
 	}
 }
 

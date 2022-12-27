@@ -1,4 +1,6 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <iostream> 
 #include <vector> 
 #include <string>
@@ -17,7 +19,8 @@
 #include "SampleBilliardObject.h"
 #include "SampleBilliardGameBall.h"
 #include "ScoreBoard.h"
-
+#include "Power.h"
+#include "GameExit.h"
 
 class SampleGame : public BaseGame
 {
@@ -42,16 +45,26 @@ protected:
 	virtual void render(sf::RenderTarget& target);
 
 private:
-	// Sample Game 에서 공을 쏘는 강도 표시
-	void renderDragpower(sf::RenderTarget& target);
+
+	//공의 방향 랜더링
+	void renderDirection(sf::RenderTarget& target);
 
 	//타이머 랜더링
 	void PlayerTimerRender(sf::RenderTarget& target);
+
+	//당구대 경계 안으로 벡터 수정
+	sf::Vector2f FixVec(sf::Vector2f vec);
+
+	//오브젝트 초기화
+	void makeBilliardObject();
 
 private:
 	// Sample Game에서 관리하는 게임 오브젝트들 (공, 당구대 등) 
 	std::vector<SampleBilliardObject*> gameObjects;
 	std::vector<Player*> Players;
+	
+	//게임 종료창
+	GameExit* ExitWindow;
 
 	// 게임 UI
 	sf::Texture tBackGround;
@@ -62,14 +75,27 @@ private:
 
 	// 마우스 위치
 	sf::Vector2f mouseXY;
+	//마우스로 끌었는지 여부
+	bool isDraggedMouse;
 
-	// 공 발사용 
-	bool isDraggingBall;
-	SampleBilliardGameBall* draggedBall;
+	//파워
+	Power* power;
+	//위치벡터
+	sf::Vector2f Posvec;
+	//방향 벡터
+	sf::Vector2f Dirvec;
+
+	//큐대 텍스쳐
+	sf::Texture CueTexture;
+	sf::Sprite CueSprite;
+	//방향 벡터(고정값)
+	sf::Vector2f CueDirvec;
+
+	SampleBilliardGameBall* playerBall;
 
 	//공 테스트용
-	bool isCatchingBall;
-	SampleBilliardBall* catchedBall;
+	//bool isCatchingBall;
+	//SampleBilliardBall* catchedBall;
 
 	// 게임 전역 폰트 
 	static sf::Font* font;
@@ -77,4 +103,5 @@ private:
 	//player 게임 시간
 	sf::Clock playerClock;
 	float StopTimer;
+	float TurnTime;
 };
